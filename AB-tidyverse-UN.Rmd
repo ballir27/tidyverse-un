@@ -1,0 +1,91 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(tidyverse)
+```
+
+
+
+```{r}
+gdp_df <- read_csv('data/gdp_per_capita.csv')
+```
+```{r}
+gdp_df %>% 
+  head(10)
+gdp_df %>% 
+  tail(10)
+```
+```{r}
+gdp_df <- gdp_df %>% 
+  select(-c(`Value Footnotes`))
+```
+```{r}
+gdp_df %>% 
+  head()
+```
+```{r}
+gdp_df %>% 
+  summarize(num_countries = n_distinct(`Country or Area`))
+```
+```{r}
+gdp_2014 <- gdp_df %>% 
+  filter(Year == 2014)
+```
+```{r}
+gdp_2014 %>% 
+  summarize(mean = mean(Value), pct25 = quantile(Value, 0.25), median = median(Value), pct75 = quantile(Value, 0.75), min = min(Value), max = max(Value))
+```
+```{r}
+gdp_2014 %>%
+  ggplot(aes(x = Value)) +
+  geom_histogram()
+```
+```{r}
+gdp_2014 %>% 
+  arrange(desc(Value)) %>%
+  head()
+gdp_2014 %>% 
+  arrange(desc(Value)) %>%
+  tail()
+```
+```{r}
+gdp_pivoted <- gdp_df %>% 
+  pivot_wider(names_from = Year, values_from = Value) %>% 
+  select(`Country or Area`, `1990`, `2018`) %>%
+  drop_na()
+
+gdp_pivoted %>% 
+  head()
+```
+```{r}
+gdp_pivoted <- gdp_pivoted %>% 
+  mutate(Percent_Change = 100 * (`2018`-`1990`)/`1990`)
+
+gdp_pivoted %>% 
+  filter(Percent_Change<0)
+
+gdp_pivoted %>% 
+  arrange(desc(Percent_Change)) %>% 
+  head()
+
+gdp_df %>% 
+  filter(`Country or Area` == "Equatorial Guinea") %>% 
+  ggplot(aes(x=Year, y=Value)) +
+  geom_line()
+```
+```{r}
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
