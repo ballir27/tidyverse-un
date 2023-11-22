@@ -24,7 +24,8 @@ gdp_df %>%
 ```
 ```{r}
 gdp_df <- gdp_df %>% 
-  select(-c(`Value Footnotes`))
+  select(-c(`Value Footnotes`)) %>% 
+  rename_with(~c('GDP_Per_Capita'), Value)
 ```
 ```{r}
 gdp_df %>% 
@@ -40,24 +41,24 @@ gdp_2014 <- gdp_df %>%
 ```
 ```{r}
 gdp_2014 %>% 
-  summarize(mean = mean(Value), pct25 = quantile(Value, 0.25), median = median(Value), pct75 = quantile(Value, 0.75), min = min(Value), max = max(Value))
+  summarize(mean = mean(GDP_Per_Capita), pct25 = quantile(GDP_Per_Capita, 0.25), median = median(GDP_Per_Capita), pct75 = quantile(GDP_Per_Capita, 0.75), min = min(GDP_Per_Capita), max = max(GDP_Per_Capita))
 ```
 ```{r}
 gdp_2014 %>%
-  ggplot(aes(x = Value)) +
+  ggplot(aes(x = GDP_Per_Capita)) +
   geom_histogram()
 ```
 ```{r}
 gdp_2014 %>% 
-  arrange(desc(Value)) %>%
+  arrange(desc(GDP_Per_Capita)) %>%
   head()
 gdp_2014 %>% 
-  arrange(desc(Value)) %>%
+  arrange(desc(GDP_Per_Capita)) %>%
   tail()
 ```
 ```{r}
 gdp_pivoted <- gdp_df %>% 
-  pivot_wider(names_from = Year, values_from = Value) %>% 
+  pivot_wider(names_from = Year, values_from = GDP_Per_Capita) %>% 
   select(`Country or Area`, `1990`, `2018`) %>%
   drop_na()
 
@@ -76,11 +77,112 @@ gdp_pivoted %>%
   head()
 
 gdp_df %>% 
-  filter(`Country or Area` == "Equatorial Guinea") %>% 
-  ggplot(aes(x=Year, y=Value)) +
+  filter(`Country or Area` == "Equatorial Guinea" | `Country or Area` == "China" | `Country or Area` == "Myanmar") %>% 
+  ggplot(aes(x=Year, y=GDP_Per_Capita, color = `Country or Area`)) +
   geom_line()
 ```
 ```{r}
+continents <- read_csv('data/continents.csv')
+continents %>% 
+  head()
+```
+```{r}
+gdp_df <- merge(continents, gdp_df, by.x = "Country", by.y = "Country or Area", all = FALSE)
+gdp_df %>% 
+  head()
+```
+```{r}
+gdp_df %>% 
+  group_by(Continent) %>% 
+  summarize(num_countries = n_distinct(Country)) %>% 
+  ggplot(aes(x = Continent, y = num_countries, fill = Continent)) +
+  geom_col() +
+  geom_text(aes(label = num_countries), vjust = -.2)
+
+```
+```{r}
+gdp_df %>%
+  filter(Year == 2018) %>% 
+  ggplot(aes(x = Continent, y = GDP_Per_Capita, fill = Continent)) +
+  geom_boxplot()
+```
+```{r}
+life_expectancy <- read_csv('data/life_expectancy.csv', skip=4) %>% 
+  select(-c(`Country Code`, `Indicator Name`, `Indicator Code`))
+life_expectancy %>% 
+  head()
+```
+```{r}
+life_expectancy <- life_expectancy %>% 
+  pivot_longer(-`Country Name`) %>% 
+  rename_with(~c('Country','Year','Life_Expectancy'))
+life_expectancy %>% 
+  head()
+```
+```{r}
+life_expectancy %>% 
+  filter(Life_Expectancy >80) %>%
+  group_by(Country) %>% 
+  summarize(Year_Over_80 = min(Year)) %>% 
+  arrange(Year_Over_80) %>% 
+  head()
+```
+```{r}
+gdp_le <- merge(gdp_df, life_expectancy, by = c("Country","Year"), all = FALSE) %>% 
+  drop_na()
+gdp_le %>% 
+  head()
+gdp_le %>% 
+  tail()
+```
+```{r}
+gdp_le_2019 <- gdp_le %>% 
+  filter(Year == 2019)
+
+gdp_le_2019 %>% 
+  filter(Life_Expectancy > 80)
+```
+```{r}
+gdp_le_2019 %>% 
+  arrange(desc(GDP_Per_Capita)) %>% 
+  head()
+```
+```{r}
+gdp_le %>% 
+  filter(Country == "Macao SAR, China" | Country == "Luxembourg" | Country == "Singapore") %>% 
+  ggplot(aes(x=Year, y=Life_Expectancy, color = Country)) + geom_point(show.legend = FALSE) + facet_wrap(~Country, nrow = 1)
+```
+```{r}
+ggplot(gdp_le_2019, aes(x=GDP_Per_Capita, y = Life_Expectancy, color = Continent)) + geom_point()
+```
+```{r}
+gdp_le_2019 %>% 
+  select(GDP_Per_Capita, Life_Expectancy) %>% 
+  cor()
+```
+
+```{r}
+ggplot(gdp_le_2019, aes(x=GDP_Per_Capita, y = Life_Expectancy, color = Continent)) + geom_point() + scale_x_log10()
+```
+```{r}
+gdp_le_2019 <- gdp_le_2019 %>% 
+  mutate(Log10_GDP_Per_Capita = log10(GDP_Per_Capita))
+
+gdp_le_2019 %>% 
+  head()
+
+gdp_le_2019 %>% 
+  select(Log10_GDP_Per_Capita, Life_Expectancy) %>% 
+  cor()
+```
+```{r}
+ggplot(gdp_le_2019, aes(x=Log10_GDP_Per_Capita, y = Life_Expectancy, color = Continent)) + geom_point()
+```
+
+```
+
+```
+
 
 ```
 
